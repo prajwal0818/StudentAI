@@ -1,0 +1,44 @@
+# Stage 1: Build the React frontend
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /frontend
+
+COPY client/package.json client/package-lock.json* ./
+RUN npm install
+
+COPY client/ .
+
+ARG REACT_APP_API_URL=/api
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+
+RUN npm run build
+
+# Stage 2: Backend + frontend static files
+# node:20-slim (Debian) for native module compatibility (bcrypt, faiss-node)
+FROM node:20-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY server/package.json server/package-lock.json* ./
+RUN npm install --omit=dev
+
+COPY server/ .
+
+# Copy frontend build output
+COPY --from=frontend-build /frontend/build ./public
+
+# Create persistent directories
+RUN mkdir -p uploads vectorstore
+
+# Run as non-root
+RUN groupadd -r studentai && useradd -r -g studentai studentai && \
+    chown -R studentai:studentai /app
+USER studentai
+
+EXPOSE 5000
+
+CMD ["node", "server.js"]

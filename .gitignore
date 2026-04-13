@@ -1,0 +1,8 @@
+node_modules/
+.env
+uploads/
+vectorstore/
+dist/
+build/
+.DS_Store
+*.log

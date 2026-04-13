@@ -19,9 +19,10 @@ StudentAI allows users to:
 
 # 🧠 Core Architecture
 
-Frontend (React / Vercel)
+Frontend (React + TailwindCSS)
         ↓
 Backend API (Node.js + Express)
+  (also serves frontend static build in Docker)
         ↓
 AI Orchestration Layer (LangChain)
         ↓
@@ -141,11 +142,13 @@ StudentAI/
 │
 ├── docker/
 │   ├── docker-compose.yml
-│   ├── Dockerfile.client
-│   ├── Dockerfile.server
+│   ├── Dockerfile.client       # Standalone frontend: node build + nginx serve
+│   ├── Dockerfile.server       # Multi-stage: builds frontend + backend together
+│   └── nginx.conf              # SPA routing + API proxy (for standalone frontend)
 │
 ├── .env.example
 ├── README.md
+├── INSTRUCTIONS.md
 └── CLAUDE.md
 
 ---
@@ -184,10 +187,14 @@ StudentAI/
 # 🐳 DOCKER STRATEGY
 
 Services:
-- frontend (client)
-- backend (server)
+- backend (server) — multi-stage build that also builds and serves the React frontend on port 5000
+- frontend (client) — standalone nginx container on port 3002 (optional, for separate frontend serving)
 - redis
 - mongo
+
+The backend Dockerfile.server builds the frontend in a first stage, copies the build output into the backend container, and Express serves the static files with SPA fallback. This means port 5000 is the primary access point for both the UI and API.
+
+The frontend API client (`client/src/services/api.js`) auto-detects VS Code code-server proxy environments and routes API calls through `/proxy/5000/api` when needed.
 
 Use docker-compose for local development.
 
