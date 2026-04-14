@@ -110,4 +110,21 @@ const remove = async (req, res, next) => {
   }
 };
 
-module.exports = { upload, list, remove };
+const getById = async (req, res, next) => {
+  try {
+    const doc = await Document.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+
+    if (!doc) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    res.json(doc);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { upload, list, remove, getById };

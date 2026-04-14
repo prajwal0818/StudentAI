@@ -10,4 +10,6 @@ export const uploadDocument = (file) => {
 
 export const listDocuments = () => api.get('/documents');
 
+export const getDocument = (id) => api.get(`/documents/${id}`);
+
 export const removeDocument = (id) => api.delete(`/documents/${id}`);
