@@ -1,3 +1,4 @@
+
 # StudentAI (Full-Stack AI Study + Email Assistant)
 
 StudentAI is a production-ready full-stack AI application that helps students understand study materials and generate intelligent emails using LLMs with Retrieval-Augmented Generation (RAG).
@@ -48,6 +49,7 @@ Vector DB (FAISS / Pinecone)
 - JWT Authentication
 - Multer (file uploads)
 - Input validation (Zod/Joi)
+- Google OAuth 2.0 (Gmail integration via `googleapis`)
 
 ## AI Layer
 - LangChain (LLM orchestration)
@@ -84,6 +86,7 @@ Vector DB (FAISS / Pinecone)
   - user prompt
   - retrieved context
 - Generate structured email using LLM
+- Optionally send directly via Gmail (OAuth 2.0)
 
 ---
 
@@ -130,6 +133,7 @@ StudentAI/
 │   │   │   ├── llm.service.js
 │   │   │   ├── rag.service.js
 │   │   │   ├── email.service.js
+│   │   │   ├── gmail.service.js
 │   │   ├── models/
 │   │   ├── middlewares/
 │   │   ├── utils/
@@ -184,6 +188,16 @@ StudentAI/
 
 ---
 
+## Gmail Send Flow
+1. User connects Gmail via Google OAuth 2.0 (one-time)
+2. OAuth tokens encrypted (AES-256-GCM) and stored in User model
+3. User generates email, clicks "Send via Gmail"
+4. Fills in recipient (To, CC, Subject pre-filled)
+5. Backend builds RFC 2822 message, sends via Gmail API
+6. Tokens auto-refresh when expired
+
+---
+
 # 🐳 DOCKER STRATEGY
 
 Services:
@@ -207,6 +221,8 @@ Use docker-compose for local development.
 - Input validation
 - Rate limiting via Redis
 - File size/type restrictions
+- OAuth tokens encrypted at rest (AES-256-GCM via TOKEN_ENCRYPTION_KEY)
+- Minimal Gmail OAuth scopes: `gmail.send` + `userinfo.email` (no read access)
 
 ---
 
@@ -238,7 +254,6 @@ Database:
 # 💡 FUTURE IMPROVEMENTS
 
 - Voice assistant (speech-to-text)
-- Gmail integration
 - Multi-user collaboration
 - Multi-agent workflows (LangGraph upgrade)
 - PDF annotation system

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { askQuestion, getChatHistory } from '../services/chat';
+import { askQuestion, getChatHistory, deleteChat } from '../services/chat';
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState([]);
@@ -14,8 +14,8 @@ export default function ChatInterface() {
       const history = data.chats
         .reverse()
         .flatMap((c) => [
-          { role: 'user', text: c.question },
-          { role: 'ai', text: c.answer, sources: c.sources },
+          { role: 'user', text: c.question, chatId: c._id },
+          { role: 'ai', text: c.answer, sources: c.sources, chatId: c._id },
         ]);
       setMessages(history);
     } catch {
@@ -44,10 +44,15 @@ export default function ChatInterface() {
 
     try {
       const { data } = await askQuestion(question);
-      setMessages((prev) => [
-        ...prev,
-        { role: 'ai', text: data.answer, sources: data.sources },
-      ]);
+      setMessages((prev) => {
+        // Attach the chat ID to the user message we just added
+        const updated = [...prev];
+        updated[updated.length - 1] = { ...updated[updated.length - 1], chatId: data.id };
+        return [
+          ...updated,
+          { role: 'ai', text: data.answer, sources: data.sources, chatId: data.id },
+        ];
+      });
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -59,6 +64,16 @@ export default function ChatInterface() {
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (chatId) => {
+    if (!chatId || !window.confirm('Delete this Q&A pair?')) return;
+    try {
+      await deleteChat(chatId);
+      setMessages((prev) => prev.filter((m) => m.chatId !== chatId));
+    } catch {
+      // ignore — message stays if delete fails
     }
   };
 
@@ -80,10 +95,10 @@ export default function ChatInterface() {
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`group flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[75%] rounded-lg px-4 py-3 ${
+              className={`relative max-w-[75%] rounded-lg px-4 py-3 ${
                 msg.role === 'user'
                   ? 'bg-indigo-600 text-white'
                   : msg.isError
@@ -98,6 +113,17 @@ export default function ChatInterface() {
                     Sources: {msg.sources.join(', ')}
                   </p>
                 </div>
+              )}
+              {msg.role === 'user' && msg.chatId && (
+                <button
+                  onClick={() => handleDelete(msg.chatId)}
+                  className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
+                  title="Delete this Q&A"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               )}
             </div>
           </div>

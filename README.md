@@ -9,6 +9,7 @@ Upload study materials, ask questions about them, and generate context-aware ema
 - **Document Upload** — Upload PDFs, TXT, and Markdown files. Text is extracted, chunked, embedded, and stored in a FAISS vector database per user.
 - **RAG-based Q&A** — Ask questions about your uploaded materials. The system retrieves relevant chunks via similarity search and generates answers using an LLM.
 - **Email Generator** — Generate emails grounded in your document context. Choose from formal, friendly, or professional tone.
+- **Gmail Integration** — Connect your Google account via OAuth 2.0 and send generated emails directly from the app. Tokens encrypted at rest.
 - **JWT Auth with Redis Sessions** — Register/login with hashed passwords. Sessions stored in Redis with logout and logout-all-devices support.
 - **Redis Caching** — LLM responses cached for 1 hour. Cache auto-invalidated when documents change.
 - **Rate Limiting** — Redis-backed rate limits (100 req/15min API, 20 req/15min auth) that persist across restarts.
@@ -53,7 +54,7 @@ StudentAI/
 │   │   ├── components/         # ChatInterface, DocumentUpload, EmailGenerator, PrivateRoute
 │   │   ├── pages/              # Login, Dashboard
 │   │   ├── hooks/              # useAuth (AuthContext + provider)
-│   │   ├── services/           # api, auth, chat, documents, email
+│   │   ├── services/           # api, auth, chat, documents, email, gmail
 │   │   └── styles/             # TailwindCSS entry
 │   └── package.json
 │
@@ -61,12 +62,12 @@ StudentAI/
 │   ├── server.js               # Entry point
 │   └── src/
 │       ├── config/             # db.js, redis.js
-│       ├── controllers/        # auth, chat, document, email
+│       ├── controllers/        # auth, chat, document, email, gmail
 │       ├── middlewares/        # auth, error, rateLimiter, upload, validate
 │       ├── models/             # User, Document, Chat
-│       ├── routes/             # auth, chat, document, email
-│       ├── services/           # llm, rag, email, chunking, embedding, vectorStore
-│       └── utils/              # logger, cache, session
+│       ├── routes/             # auth, chat, document, email, gmail
+│       ├── services/           # llm, rag, email, gmail, chunking, embedding, vectorStore
+│       └── utils/              # logger, cache, session, encryption
 │
 ├── worker/                     # Background job processor
 │   └── pdfProcessor.js
@@ -111,7 +112,16 @@ StudentAI/
 |--------|----------|-------------|
 | POST | `/api/email/generate` | Generate email (`{ prompt, tone }`) |
 
-All endpoints except auth require a `Bearer` token in the `Authorization` header.
+### Gmail
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/gmail/status` | Check Gmail connection status |
+| GET | `/api/gmail/connect` | Get Google OAuth consent URL |
+| GET | `/api/gmail/callback` | OAuth callback (no auth — Google redirect) |
+| POST | `/api/gmail/send` | Send email (`{ to, cc?, subject, body }`) |
+| POST | `/api/gmail/disconnect` | Disconnect Gmail account |
+
+All endpoints except auth and `/api/gmail/callback` require a `Bearer` token in the `Authorization` header.
 
 ## Quick Start
 
@@ -146,6 +156,10 @@ cd docker && docker compose up -d
 | `EMBEDDING_MODEL` | Embedding model | `text-embedding-ada-002` |
 | `SESSION_TTL` | Session lifetime in seconds | `604800` (7 days) |
 | `LOG_LEVEL` | Winston log level | `info` |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID (for Gmail) | (optional) |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | (optional) |
+| `GOOGLE_REDIRECT_URI` | OAuth redirect URI | `http://localhost:5000/api/gmail/callback` |
+| `TOKEN_ENCRYPTION_KEY` | 64-char hex key for encrypting OAuth tokens | (optional) |
 
 ## License
 

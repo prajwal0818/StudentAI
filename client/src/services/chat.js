@@ -5,3 +5,5 @@ export const askQuestion = (question) =>
 
 export const getChatHistory = (page = 1, limit = 20) =>
   api.get('/chat/history', { params: { page, limit } });
+
+export const deleteChat = (id) => api.delete(`/chat/${id}`);

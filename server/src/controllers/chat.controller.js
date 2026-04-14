@@ -75,4 +75,26 @@ const history = async (req, res, next) => {
   }
 };
 
-module.exports = { ask, history };
+const remove = async (req, res, next) => {
+  try {
+    const chat = await Chat.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+
+    if (!chat) {
+      return res.status(404).json({ message: 'Chat not found' });
+    }
+
+    // Invalidate cached response for this question
+    const cacheKey = cache.buildKey(`chat:${req.user.id}`, chat.question);
+    await cache.del(cacheKey);
+
+    logger.info(`Chat deleted: ${chat._id} by user ${req.user.id}`);
+    res.json({ message: 'Chat deleted' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { ask, history, remove };
