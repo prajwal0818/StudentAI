@@ -17,6 +17,7 @@
     "express": "^4.19.2",
     "express-rate-limit": "^7.3.1",
     "faiss-node": "^0.5.1",
+    "googleapis": "^171.4.0",
     "jsonwebtoken": "^9.0.2",
     "langchain": "^0.2.5",
     "mongoose": "^8.4.1",

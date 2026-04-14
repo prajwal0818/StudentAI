@@ -5,5 +5,6 @@ const chatController = require('../controllers/chat.controller');
 
 router.post('/ask', auth, chatController.ask);
 router.get('/history', auth, chatController.history);
+router.delete('/:id', auth, chatController.remove);
 
 module.exports = router;

@@ -30,6 +30,7 @@ app.use('/api/auth', require('./src/routes/auth.routes'));
 app.use('/api/documents', require('./src/routes/document.routes'));
 app.use('/api/chat', require('./src/routes/chat.routes'));
 app.use('/api/email', require('./src/routes/email.routes'));
+app.use('/api/gmail', require('./src/routes/gmail.routes'));
 
 // Health check
 app.get('/api/health', (req, res) => {

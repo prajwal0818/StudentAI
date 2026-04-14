@@ -177,6 +177,27 @@ Switch to the **Chat** tab. Type a question about your uploaded materials. The s
 ### Step 4: Generate emails
 Go to the **Email** tab. Describe the email you need, pick a tone (professional, formal, or friendly), and click generate. The system pulls relevant context from your documents to make the email more specific.
 
+### Step 5: Send emails via Gmail (optional)
+To send generated emails directly from the app:
+
+1. **Set up Google OAuth credentials** (one-time):
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a project (or use an existing one)
+   - Enable the **Gmail API**
+   - Go to **Credentials** → Create **OAuth 2.0 Client ID** (Web application)
+   - Add `http://localhost:5000/api/gmail/callback` as an **Authorized redirect URI**
+   - Copy the Client ID and Client Secret
+
+2. **Add to `.env`**:
+   ```env
+   GOOGLE_CLIENT_ID=your_client_id_here
+   GOOGLE_CLIENT_SECRET=your_client_secret_here
+   GOOGLE_REDIRECT_URI=http://localhost:5000/api/gmail/callback
+   TOKEN_ENCRYPTION_KEY=<generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))">
+   ```
+
+3. **Connect in the app**: On the Email tab, click **"Connect Gmail"**, authorize with Google, and you'll be redirected back. You can now click **"Send via Gmail"** on any generated email, fill in the recipient, and send.
+
 ---
 
 ## 4. Troubleshooting

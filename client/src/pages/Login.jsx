@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Login() {
@@ -22,7 +22,7 @@ export default function Login() {
       } else {
         await login(email, password);
       }
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong');
     } finally {
@@ -124,6 +124,12 @@ export default function Login() {
             </button>
           </p>
         </form>
+
+        <p className="text-center mt-6">
+          <Link to="/" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+            &larr; Back to home
+          </Link>
+        </p>
       </div>
     </div>
   );
