@@ -174,10 +174,17 @@ Go to the **Documents** tab. Drag and drop a PDF, TXT, or MD file (max 10 MB). T
 ### Step 3: Ask questions
 Switch to the **Chat** tab. Type a question about your uploaded materials. The system finds the most relevant chunks via similarity search, sends them as context to the LLM, and returns an answer with source citations.
 
-### Step 4: Generate emails
+### Step 4: Generate and take quizzes
+Go to the **Quizzes** tab:
+- **Generate Quiz**: Select difficulty (Easy/Medium/Hard/Mixed), choose number of questions (5-20), optionally filter specific documents, and click generate
+- **Take Quiz**: Answer multiple choice, short answer, and true/false questions. Progress is auto-saved to localStorage every 30 seconds
+- **Submit & Review**: Get instant grading with detailed feedback and explanations. Multi-tier grading ensures accuracy (exact match → fuzzy match → LLM evaluation)
+- **View History**: Browse past quizzes, filter by difficulty, and review your performance
+
+### Step 5: Generate emails
 Go to the **Email** tab. Describe the email you need, pick a tone (professional, formal, or friendly), and click generate. The system pulls relevant context from your documents to make the email more specific.
 
-### Step 5: Send emails via Gmail (optional)
+### Step 6: Send emails via Gmail (optional)
 To send generated emails directly from the app:
 
 1. **Set up Google OAuth credentials** (one-time):

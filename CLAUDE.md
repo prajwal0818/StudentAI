@@ -1,7 +1,7 @@
 
-# StudentAI (Full-Stack AI Study + Email Assistant)
+# StudentAI (Full-Stack AI Study, Quiz & Email Assistant)
 
-StudentAI is a production-ready full-stack AI application that helps students understand study materials and generate intelligent emails using LLMs with Retrieval-Augmented Generation (RAG).
+StudentAI is a production-ready full-stack AI application that helps students understand study materials, generate contextual quizzes, and create intelligent emails using LLMs with Retrieval-Augmented Generation (RAG).
 
 ---
 
@@ -11,6 +11,11 @@ StudentAI allows users to:
 
 - Upload study materials (PDFs, notes, documents)
 - Ask questions about uploaded content using AI (RAG-based Q&A)
+- Generate intelligent quizzes with:
+  - Multiple choice, short answer, and true/false questions
+  - RAG-based question generation from uploaded documents
+  - Multi-tier grading (exact → fuzzy → LLM evaluation)
+  - Detailed feedback and explanations
 - Generate emails based on:
   - User prompts
   - Uploaded document context

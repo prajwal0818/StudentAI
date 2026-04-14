@@ -12,10 +12,11 @@ This guide explains how to test all features of the StudentAI application using 
 4. [Testing Document Upload](#4-testing-document-upload)
 5. [Testing RAG Question & Answer](#5-testing-rag-question--answer)
 6. [Testing Email Generation](#6-testing-email-generation)
-7. [Testing Cache Behavior](#7-testing-cache-behavior)
-8. [Testing Document Deletion](#8-testing-document-deletion)
-9. [Feature Test Matrix](#9-feature-test-matrix)
-10. [Troubleshooting](#10-troubleshooting)
+7. [Testing Quiz Generation & Grading](#7-testing-quiz-generation--grading)
+8. [Testing Cache Behavior](#8-testing-cache-behavior)
+9. [Testing Document Deletion](#9-testing-document-deletion)
+10. [Feature Test Matrix](#10-feature-test-matrix)
+11. [Troubleshooting](#11-troubleshooting)
 
 ---
 
@@ -222,7 +223,226 @@ Upload `project_guidelines.md` first, as it provides the best context for profes
 
 ---
 
-## 7. Testing Cache Behavior
+## 7. Testing Quiz Generation & Grading
+
+Upload sample files first (recommend `machine_learning_notes.md` or `data_structures_reference.txt` for technical quizzes).
+
+### Quiz Generation Tests
+
+#### Test 1 — Basic Quiz Generation
+1. Go to **Quizzes** tab → "Generate New Quiz"
+2. Select difficulty: **Medium**
+3. Set question count: **10**
+4. Leave documents unselected (uses all documents)
+5. Click "Generate Quiz"
+
+**Verify:**
+- [ ] Quiz generates successfully within 30 seconds
+- [ ] Mix of MCQ, short answer, and true/false questions
+- [ ] Questions are relevant to uploaded document content
+- [ ] Correct answers are NOT visible before submission
+
+#### Test 2 — Difficulty Levels
+Generate 3 quizzes with the same documents but different difficulties:
+- **Easy:** Questions should test recall and definitions
+- **Medium:** Questions should test understanding and application
+- **Hard:** Questions should test analysis and synthesis
+
+**Verify:**
+- [ ] Easy questions are noticeably simpler than hard questions
+- [ ] Questions appropriately match difficulty level
+
+#### Test 3 — Question Count Range
+- Generate quiz with **5 questions** (minimum)
+- Generate quiz with **20 questions** (maximum)
+- Try generating with invalid count (e.g., 25 or 3) — should be rejected
+
+**Verify:**
+- [ ] Minimum and maximum counts work
+- [ ] Invalid counts show error message
+
+#### Test 4 — Document Selection
+1. Upload multiple sample files
+2. Generate quiz with only one document selected
+3. Questions should only come from that document's content
+
+**Verify:**
+- [ ] Questions are constrained to selected document(s)
+- [ ] Selecting no documents uses all uploaded documents
+
+### Quiz Taking Tests
+
+#### Test 5 — Answer Recording
+1. Generate a quiz
+2. Answer some questions (mix of correct and incorrect)
+3. Navigate between questions using Previous/Next
+4. Refresh the page (auto-save should restore answers)
+
+**Verify:**
+- [ ] Answers are saved when navigating between questions
+- [ ] Auto-save to localStorage works (answers persist after refresh)
+- [ ] Current question index is preserved
+
+#### Test 6 — Question Types
+Test each question type:
+- **MCQ:** Select an option, verify it's highlighted
+- **True/False:** Click True or False button
+- **Short Answer:** Type a free-text response
+
+**Verify:**
+- [ ] Each question type renders correctly
+- [ ] User can change their answer before submitting
+- [ ] Progress bar updates correctly
+
+### Grading Tests
+
+#### Test 7 — MCQ Grading
+1. Generate a quiz
+2. For MCQ questions, select:
+   - Some correct answers
+   - Some incorrect answers
+3. Submit the quiz
+
+**Verify:**
+- [ ] Correct answers marked as correct (green)
+- [ ] Incorrect answers marked as incorrect (red)
+- [ ] Explanation shown for each question
+
+#### Test 8 — Short Answer Grading (Multi-tier)
+For short answer questions, test these scenarios:
+
+| Answer Type | Test Case | Expected Result |
+|-------------|-----------|-----------------|
+| **Exact match** | Type the exact correct answer | Marked correct immediately |
+| **Fuzzy match** | Type answer with minor typos or different wording | Marked correct (80%+ similarity) |
+| **Semantically correct** | Paraphrase the answer correctly | LLM evaluates as correct |
+| **Incorrect** | Give wrong answer | Marked incorrect with explanation |
+
+**Verify:**
+- [ ] Exact matches are recognized
+- [ ] Fuzzy matching works for slight variations
+- [ ] LLM evaluation provides feedback for partial answers
+- [ ] Multi-tier system minimizes unnecessary LLM calls
+
+#### Test 9 — True/False Grading
+Test various input formats:
+- Type "true", "True", "t", "yes", "1"
+- Type "false", "False", "f", "no", "0"
+
+**Verify:**
+- [ ] All true variants are recognized
+- [ ] All false variants are recognized
+- [ ] Invalid inputs handled gracefully
+
+#### Test 10 — Scoring
+1. Generate a 10-question quiz
+2. Answer exactly 7 correctly, 3 incorrectly
+3. Submit
+
+**Verify:**
+- [ ] Score is calculated as 70%
+- [ ] Pass/Fail status shown (60% threshold)
+- [ ] Points earned vs total points displayed correctly
+
+### Quiz History Tests
+
+#### Test 11 — History Display
+1. Generate and submit multiple quizzes
+2. Go to "Quiz History" tab
+
+**Verify:**
+- [ ] All submitted quizzes appear in history
+- [ ] Non-submitted quizzes (abandoned) do not appear or are marked differently
+- [ ] Each card shows: difficulty, question count, score, date
+
+#### Test 12 — Pagination
+1. Generate 15+ quizzes
+2. Navigate through history pages
+
+**Verify:**
+- [ ] Pagination controls appear
+- [ ] 10 quizzes per page (default)
+- [ ] Page navigation works correctly
+
+#### Test 13 — Filtering
+1. Generate quizzes with different difficulties
+2. Use difficulty filter dropdown
+
+**Verify:**
+- [ ] Filter by Easy/Medium/Hard works
+- [ ] "All Difficulties" shows everything
+- [ ] Filtered results update immediately
+
+#### Test 14 — Quiz Review
+1. Click "View Results" on a submitted quiz
+2. Review the results page
+
+**Verify:**
+- [ ] Score displayed prominently
+- [ ] Questions expandable/collapsible (accordion)
+- [ ] Each question shows: user's answer, correct answer, explanation
+- [ ] Color coding (green = correct, red = incorrect)
+
+#### Test 15 — Quiz Deletion
+1. Delete a quiz from history
+2. Confirm deletion
+
+**Verify:**
+- [ ] Confirmation modal appears
+- [ ] Quiz removed from history after confirmation
+- [ ] Cannot delete other users' quizzes
+
+### Cache Tests for Quizzes
+
+#### Test 16 — Quiz Generation Caching
+1. Generate a quiz with specific settings (e.g., 10 questions, medium difficulty)
+2. Generate another quiz with the **exact same settings**
+3. Second generation should be instant (from cache)
+
+**Verify:**
+- [ ] Cached quiz returns in <1 second
+- [ ] Different settings generate new quiz (no cache hit)
+
+#### Test 17 — Cache Invalidation
+1. Generate a quiz
+2. Upload a new document
+3. Generate quiz again with same settings
+
+**Verify:**
+- [ ] Cache is invalidated after document upload
+- [ ] New quiz generated (not served from cache)
+- [ ] Questions reflect content from newly uploaded document
+
+### Edge Cases
+
+#### Test 18 — No Documents
+1. Without uploading any documents, try to generate a quiz
+
+**Verify:**
+- [ ] Error message: "No documents found. Please upload study materials first."
+- [ ] User is prompted to upload documents
+
+#### Test 19 — Incomplete Submission
+1. Generate a quiz
+2. Answer only some questions (leave others blank)
+3. Submit
+
+**Verify:**
+- [ ] Submission warning shows: "X of Y questions unanswered"
+- [ ] Unanswered questions marked as incorrect
+- [ ] Score calculated correctly
+
+#### Test 20 — Re-submission Prevention
+1. Submit a quiz
+2. Try to submit the same quiz again
+
+**Verify:**
+- [ ] Error: "Quiz already submitted"
+- [ ] Cannot change answers after submission
+
+---
+
+## 8. Testing Cache Behavior
 
 Redis caching should reduce response time for repeated queries.
 
@@ -259,7 +479,7 @@ Redis caching should reduce response time for repeated queries.
 
 ---
 
-## 9. Feature Test Matrix
+## 10. Feature Test Matrix
 
 Use this checklist to track comprehensive testing across all features:
 
@@ -284,6 +504,20 @@ Use this checklist to track comprehensive testing across all features:
 | **Email** | Generate professional email | |
 | **Email** | Email with document context | |
 | **Email** | Email without document context | |
+| **Quiz** | Generate quiz with 10 questions | |
+| **Quiz** | Generate easy/medium/hard quizzes | |
+| **Quiz** | Take quiz and submit answers | |
+| **Quiz** | MCQ grading works correctly | |
+| **Quiz** | Short answer multi-tier grading | |
+| **Quiz** | True/False answer variants recognized | |
+| **Quiz** | Score calculation is accurate | |
+| **Quiz** | View quiz history with pagination | |
+| **Quiz** | Filter history by difficulty | |
+| **Quiz** | Review submitted quiz results | |
+| **Quiz** | Delete quiz from history | |
+| **Quiz** | Auto-save during quiz taking | |
+| **Quiz** | Quiz generation cached (same settings) | |
+| **Quiz** | Cache invalidated on document change | |
 | **Cache** | Repeated query is faster (cache hit) | |
 | **Cache** | Cache invalidation on document change | |
 | **Delete** | Delete document removes from list | |
@@ -294,7 +528,7 @@ Use this checklist to track comprehensive testing across all features:
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 ### Application won't start
 
