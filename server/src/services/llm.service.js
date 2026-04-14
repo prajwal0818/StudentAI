@@ -1,10 +1,10 @@
-const { ChatOpenAI } = require('@langchain/openai');
+const { ChatGroq } = require('@langchain/groq');
 
 const getLLM = () => {
-  return new ChatOpenAI({
-    modelName: process.env.LLM_MODEL || 'gpt-3.5-turbo',
+  return new ChatGroq({
+    model: process.env.LLM_MODEL || 'llama-3.3-70b-versatile',
     temperature: 0.7,
-    openAIApiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.GROQ_API_KEY,
   });
 };
 

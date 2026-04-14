@@ -51,6 +51,7 @@ This starts:
 - MongoDB on **port 27017**
 - Redis on **port 6379**
 
+
 Open **http://localhost:5000** in your browser.
 
 ### Option B: Manual Setup

@@ -1,12 +1,12 @@
-const { OpenAIEmbeddings } = require('@langchain/openai');
+const { GoogleGenerativeAIEmbeddings } = require('@langchain/google-genai');
 
 let embeddingsInstance = null;
 
 const getEmbeddings = () => {
   if (!embeddingsInstance) {
-    embeddingsInstance = new OpenAIEmbeddings({
-      modelName: process.env.EMBEDDING_MODEL || 'text-embedding-ada-002',
-      openAIApiKey: process.env.OPENAI_API_KEY,
+    embeddingsInstance = new GoogleGenerativeAIEmbeddings({
+      model: process.env.EMBEDDING_MODEL || 'gemini-embedding-001',
+      apiKey: process.env.GOOGLE_API_KEY,
     });
   }
   return embeddingsInstance;
