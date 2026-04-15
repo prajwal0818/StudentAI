@@ -5,6 +5,8 @@ import PrivateRoute from './components/PrivateRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import QuizTaker from './components/QuizTaker';
+import QuizResults from './components/QuizResults';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -47,6 +49,26 @@ function App() {
               element={
                 <PrivateRoute>
                   <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/quiz/take"
+              element={
+                <PrivateRoute>
+                  <div className="min-h-screen bg-gray-50 p-8">
+                    <QuizTaker />
+                  </div>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/quiz/results"
+              element={
+                <PrivateRoute>
+                  <div className="min-h-screen bg-gray-50 p-8">
+                    <QuizResults />
+                  </div>
                 </PrivateRoute>
               }
             />

@@ -1,13 +1,14 @@
 # StudentAI
 
-Full-stack AI study assistant and email generator powered by RAG (Retrieval-Augmented Generation).
+Full-stack AI study assistant, quiz generator, and email tool powered by RAG (Retrieval-Augmented Generation).
 
-Upload study materials, ask questions about them, and generate context-aware emails — all backed by LLMs with semantic document search.
+Upload study materials, ask questions about them, generate intelligent quizzes, and create context-aware emails — all backed by LLMs with semantic document search.
 
 ## Features
 
 - **Document Upload** — Upload PDFs, TXT, and Markdown files. Text is extracted, chunked, embedded, and stored in a FAISS vector database per user.
 - **RAG-based Q&A** — Ask questions about your uploaded materials. The system retrieves relevant chunks via similarity search and generates answers using an LLM.
+- **Smart Quiz Generator** — Generate contextual quizzes from your study materials with MCQ, short answer, and true/false questions. Multi-tier grading (exact → fuzzy → LLM) with detailed feedback.
 - **Email Generator** — Generate emails grounded in your document context. Choose from formal, friendly, or professional tone.
 - **Gmail Integration** — Connect your Google account via OAuth 2.0 and send generated emails directly from the app. Tokens encrypted at rest.
 - **JWT Auth with Redis Sessions** — Register/login with hashed passwords. Sessions stored in Redis with logout and logout-all-devices support.
@@ -30,7 +31,8 @@ React (TailwindCSS)  ──>  Express API (Node.js)
             MongoDB        Redis         FAISS
            (users,       (cache,       (vector
             docs,        sessions,      embeddings,
-            chats)       rate limits)   per-user)
+            chats,       rate limits)   per-user)
+            quizzes)
 ```
 
 > **Note:** In Docker, the backend container builds the React frontend in a multi-stage build and serves both the static files and API on port 5000. A standalone nginx frontend container is also available on port 3002 for environments where separate serving is preferred.
@@ -51,10 +53,10 @@ React (TailwindCSS)  ──>  Express API (Node.js)
 StudentAI/
 ├── client/                     # React frontend
 │   ├── src/
-│   │   ├── components/         # ChatInterface, DocumentUpload, EmailGenerator, PrivateRoute
+│   │   ├── components/         # ChatInterface, DocumentUpload, EmailGenerator, Quiz components, PrivateRoute
 │   │   ├── pages/              # Login, Dashboard
 │   │   ├── hooks/              # useAuth (AuthContext + provider)
-│   │   ├── services/           # api, auth, chat, documents, email, gmail
+│   │   ├── services/           # api, auth, chat, documents, email, gmail, quiz
 │   │   └── styles/             # TailwindCSS entry
 │   └── package.json
 │
@@ -62,11 +64,11 @@ StudentAI/
 │   ├── server.js               # Entry point
 │   └── src/
 │       ├── config/             # db.js, redis.js
-│       ├── controllers/        # auth, chat, document, email, gmail
+│       ├── controllers/        # auth, chat, document, email, gmail, quiz
 │       ├── middlewares/        # auth, error, rateLimiter, upload, validate
-│       ├── models/             # User, Document, Chat
-│       ├── routes/             # auth, chat, document, email, gmail
-│       ├── services/           # llm, rag, email, gmail, chunking, embedding, vectorStore
+│       ├── models/             # User, Document, Chat, Quiz
+│       ├── routes/             # auth, chat, document, email, gmail, quiz
+│       ├── services/           # llm, rag, email, gmail, quiz (generator, evaluator), chunking, embedding, vectorStore
 │       └── utils/              # logger, cache, session, encryption
 │
 ├── worker/                     # Background job processor
@@ -120,6 +122,15 @@ StudentAI/
 | GET | `/api/gmail/callback` | OAuth callback (no auth — Google redirect) |
 | POST | `/api/gmail/send` | Send email (`{ to, cc?, subject, body }`) |
 | POST | `/api/gmail/disconnect` | Disconnect Gmail account |
+
+### Quiz
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/quiz/generate` | Generate quiz (`{ questionCount, difficulty, documentIds? }`) |
+| POST | `/api/quiz/:id/submit` | Submit answers (`{ answers: [] }`) |
+| GET | `/api/quiz/history` | Paginated history (`?page=1&limit=10&difficulty=medium`) |
+| GET | `/api/quiz/:id` | Get single quiz (questions only if not submitted) |
+| DELETE | `/api/quiz/:id` | Delete a quiz |
 
 All endpoints except auth and `/api/gmail/callback` require a `Bearer` token in the `Authorization` header.
 

@@ -3,11 +3,13 @@ import { useAuth } from '../hooks/useAuth';
 import DocumentUpload from '../components/DocumentUpload';
 import ChatInterface from '../components/ChatInterface';
 import EmailGenerator from '../components/EmailGenerator';
+import QuizDashboard from '../components/QuizDashboard';
 
 const TABS = [
   { key: 'documents', label: 'Documents' },
   { key: 'chat', label: 'Chat' },
   { key: 'email', label: 'Email' },
+  { key: 'quiz', label: 'Quizzes' },
 ];
 
 export default function Dashboard() {
@@ -64,6 +66,7 @@ export default function Dashboard() {
           {activeTab === 'documents' && <DocumentUpload />}
           {activeTab === 'chat' && <ChatInterface />}
           {activeTab === 'email' && <EmailGenerator />}
+          {activeTab === 'quiz' && <QuizDashboard />}
         </div>
       </main>
     </div>

@@ -50,6 +50,7 @@ const upload = async (req, res, next) => {
     // Invalidate cached LLM responses — context has changed
     await cache.invalidatePattern(`chat:${req.user.id}:*`);
     await cache.invalidatePattern(`email:${req.user.id}:*`);
+    await cache.invalidatePattern(`quiz:${req.user.id}:*`);
 
     logger.info(`Document uploaded and ingested: ${doc._id} (${chunkCount} chunks)`);
 
@@ -100,6 +101,7 @@ const remove = async (req, res, next) => {
     // Invalidate cached LLM responses — context has changed
     await cache.invalidatePattern(`chat:${req.user.id}:*`);
     await cache.invalidatePattern(`email:${req.user.id}:*`);
+    await cache.invalidatePattern(`quiz:${req.user.id}:*`);
 
     logger.info(`Document deleted: ${doc._id} by user ${req.user.id}`);
     res.json({ message: 'Document deleted' });
