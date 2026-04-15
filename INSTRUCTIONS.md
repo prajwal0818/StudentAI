@@ -207,6 +207,64 @@ To send generated emails directly from the app:
 
 ---
 
+## 3c. Run the MCP Server (AI Assistant Integration)
+
+The MCP server lets AI assistants (Claude Desktop, VS Code Copilot, etc.) interact with your study materials through natural conversation. It connects directly to the same services as the web app — MongoDB, Redis, and FAISS.
+
+### Prerequisites
+
+- MongoDB and Redis must be running (same as the web app)
+- A registered user account (you need the MongoDB user ID)
+- Environment variables configured in `server/.env`
+
+### Find your user ID
+
+After registering via the web app, find your MongoDB user ID:
+
+```bash
+# Using mongosh
+mongosh studentai --eval 'db.users.find({}, {email:1})'
+
+# Or from Docker
+docker exec docker-mongo mongosh studentai --eval 'db.users.find({}, {email:1})'
+```
+
+### Start the MCP server
+
+```bash
+cd server
+MCP_USER_ID="<your-mongodb-user-id>" npm run mcp
+```
+
+### Test with MCP Inspector
+
+```bash
+cd server
+MCP_USER_ID="<your-user-id>" npx @modelcontextprotocol/inspector node src/mcp/index.js
+```
+
+### Configure Claude Desktop
+
+Add to your Claude Desktop config (`~/.config/Claude/claude_desktop_config.json` on Linux, `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+
+```json
+{
+  "mcpServers": {
+    "studentai": {
+      "command": "node",
+      "args": ["/absolute/path/to/StudentAI/server/src/mcp/index.js"],
+      "env": {
+        "MCP_USER_ID": "<your-mongodb-user-id>"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop after saving. Your StudentAI tools will appear in the conversation.
+
+---
+
 ## 4. Troubleshooting
 
 ### Backend won't start — "MongoDB connection error"
@@ -235,6 +293,14 @@ To send generated emails directly from the app:
 - If running locally, confirm `REACT_APP_API_URL` points to `http://localhost:5000/api`
 - Try a hard refresh (`Ctrl+Shift+R`) to clear cached assets after rebuilds
 
+### MCP server won't start — "MCP_USER_ID environment variable is required"
+- Set the `MCP_USER_ID` env var when running the MCP server
+- The value must be a valid MongoDB ObjectId from the `users` collection
+
+### MCP server — "does not match any user in the database"
+- Verify the user ID exists: `mongosh studentai --eval 'db.users.findOne({_id: ObjectId("<id>")})'`
+- Make sure MongoDB is running and `MONGODB_URI` in `.env` is correct
+
 ### Rate limit errors (429)
 - API: 100 requests per 15 minutes
 - Auth: 20 requests per 15 minutes
@@ -250,3 +316,4 @@ To send generated emails directly from the app:
 | Frontend (nginx) | 3002 | Standalone React app via nginx (optional, separate container) |
 | MongoDB | 27017 | Database |
 | Redis | 6379 | Cache, sessions, rate limits |
+| MCP Server | STDIO | AI assistant integration (no network port) |

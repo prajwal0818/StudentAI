@@ -15,8 +15,9 @@ This guide explains how to test all features of the StudentAI application using 
 7. [Testing Quiz Generation & Grading](#7-testing-quiz-generation--grading)
 8. [Testing Cache Behavior](#8-testing-cache-behavior)
 9. [Testing Document Deletion](#9-testing-document-deletion)
-10. [Feature Test Matrix](#10-feature-test-matrix)
-11. [Troubleshooting](#11-troubleshooting)
+10. [Testing MCP Server](#10-testing-mcp-server)
+11. [Feature Test Matrix](#11-feature-test-matrix)
+12. [Troubleshooting](#12-troubleshooting)
 
 ---
 
@@ -461,7 +462,7 @@ Redis caching should reduce response time for repeated queries.
 
 ---
 
-## 8. Testing Document Deletion
+## 9. Testing Document Deletion
 
 ### Steps
 
@@ -479,7 +480,93 @@ Redis caching should reduce response time for repeated queries.
 
 ---
 
-## 10. Feature Test Matrix
+## 10. Testing MCP Server
+
+The MCP server exposes all AI capabilities as tools for AI assistants. Test it using the MCP Inspector.
+
+### Setup
+
+```bash
+cd server
+MCP_USER_ID="<your-user-id>" npx @modelcontextprotocol/inspector node src/mcp/index.js
+```
+
+### MCP Tool Tests
+
+#### Test 1 — Document Tools
+1. Call `list_documents` — should return empty array or existing docs
+2. Call `upload_text_document` with `{ name: "test.txt", content: "Machine learning is a subset of AI..." }`
+3. Call `list_documents` again — should show the new document
+4. Call `get_document` with the document ID — should return full details and extracted text
+5. Call `search_documents` with `{ query: "machine learning" }` — should return relevant chunks
+6. Call `delete_document` with the document ID — should succeed
+7. Call `list_documents` — document should be gone
+
+**Verify:**
+- [ ] All CRUD operations work
+- [ ] Vector store is updated on upload/delete
+- [ ] Search returns relevant results
+
+#### Test 2 — Chat Tools
+1. Upload a document first (via `upload_text_document`)
+2. Call `ask_question` with `{ question: "What is machine learning?" }`
+3. Call `ask_question` again with the same question (should be cached)
+4. Call `get_chat_history` — should show the question and answer
+
+**Verify:**
+- [ ] RAG pipeline returns relevant answers
+- [ ] Chat is persisted to history
+- [ ] Cache works (second call faster)
+
+#### Test 3 — Quiz Tools
+1. Upload study materials first
+2. Call `generate_quiz` with `{ questionCount: 5, difficulty: "medium" }`
+3. Call `get_quiz` with the quiz ID — should show questions without answers
+4. Call `submit_quiz` with the quiz ID and answers array
+5. Call `get_quiz_history` — should show the submitted quiz
+
+**Verify:**
+- [ ] Quiz generates with correct number of questions
+- [ ] Answers are hidden before submission
+- [ ] Grading returns scores and feedback
+- [ ] History shows all quizzes
+
+#### Test 4 — Email Tools
+1. Call `generate_email` with `{ prompt: "Write a thank you email to my professor", tone: "formal" }`
+
+**Verify:**
+- [ ] Email is generated with proper structure
+- [ ] Tone matches the request
+- [ ] Document context is incorporated if documents are uploaded
+
+#### Test 5 — Gmail Tools
+1. Call `gmail_status` — should return connected/disconnected status
+2. If connected, call `send_gmail` with test parameters
+
+**Verify:**
+- [ ] Status correctly reflects Gmail connection
+- [ ] Error response if Gmail not connected
+
+#### Test 6 — MCP Resources
+1. Read `studentai://documents` — should return JSON list of documents
+2. Read `studentai://documents/{id}` — should return document text content
+
+**Verify:**
+- [ ] Resources return correct data
+- [ ] Document content resource returns extracted text
+
+#### Test 7 — Error Handling
+1. Call `get_document` with an invalid ID
+2. Call `submit_quiz` with an already-submitted quiz
+3. Call `ask_question` without any uploaded documents
+
+**Verify:**
+- [ ] All errors return `isError: true` with descriptive messages
+- [ ] Server does not crash on errors
+
+---
+
+## 11. Feature Test Matrix
 
 Use this checklist to track comprehensive testing across all features:
 
@@ -522,13 +609,22 @@ Use this checklist to track comprehensive testing across all features:
 | **Cache** | Cache invalidation on document change | |
 | **Delete** | Delete document removes from list | |
 | **Delete** | Deleted document content no longer in Q&A | |
+| **MCP** | list_documents returns documents | |
+| **MCP** | upload_text_document creates doc + ingests to FAISS | |
+| **MCP** | ask_question returns RAG-based answer | |
+| **MCP** | generate_quiz returns questions without answers | |
+| **MCP** | submit_quiz returns graded results | |
+| **MCP** | generate_email returns email draft | |
+| **MCP** | gmail_status shows connection status | |
+| **MCP** | Error cases return isError: true | |
+| **MCP** | Resources return document data | |
 | **UI** | Responsive layout on mobile | |
 | **UI** | Loading states display correctly | |
 | **UI** | Error messages display correctly | |
 
 ---
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 ### Application won't start
 
