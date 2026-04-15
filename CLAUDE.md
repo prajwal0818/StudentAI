@@ -20,6 +20,7 @@ StudentAI allows users to:
   - User prompts
   - Uploaded document context
 - Choose tone: formal, friendly, professional
+- Access all features via MCP (Model Context Protocol) from AI assistants like Claude Desktop
 
 ---
 
@@ -40,6 +41,14 @@ Redis (cache + queues + sessions)
 Vector DB (FAISS / Pinecone)
 ----------------------------------------
 
+Claude Desktop / VS Code / MCP Client
+        ↓  (JSON-RPC 2.0 over STDIO)
+   MCP Server  (server/src/mcp/index.js)
+        ↓  (direct function calls)
+   Existing Services (rag, quiz, email, gmail, vectorStore)
+        ↓
+   MongoDB / Redis / FAISS
+
 ---
 
 # 🧱 Tech Stack
@@ -59,6 +68,7 @@ Vector DB (FAISS / Pinecone)
 ## AI Layer
 - LangChain (LLM orchestration)
 - RAG pipeline
+- MCP SDK (`@modelcontextprotocol/sdk` — AI assistant integration)
 
 ## Databases
 - MongoDB (users, chats, metadata)
@@ -142,7 +152,12 @@ StudentAI/
 │   │   ├── models/
 │   │   ├── middlewares/
 │   │   ├── utils/
-│   │   └── config/
+│   │   ├── config/
+│   │   └── mcp/                    # MCP server for AI assistant integration
+│   │       ├── index.js            # Entry point (bootstrap, STDIO transport)
+│   │       ├── tools/              # Tool modules (documents, chat, quiz, email, gmail)
+│   │       ├── resources/          # MCP resources (document list, document content)
+│   │       └── utils/              # Auth (MCP_USER_ID) and response formatters
 │   ├── server.js
 │   ├── package.json
 │
@@ -200,6 +215,16 @@ StudentAI/
 4. Fills in recipient (To, CC, Subject pre-filled)
 5. Backend builds RFC 2822 message, sends via Gmail API
 6. Tokens auto-refresh when expired
+
+---
+
+## MCP Server Flow
+1. MCP client (Claude Desktop, etc.) connects via STDIO
+2. Server loads env, connects MongoDB/Redis, validates MCP_USER_ID
+3. All Winston logging redirected to stderr (stdout reserved for JSON-RPC)
+4. 14 tools + 2 resources registered
+5. Client calls tools → direct service function calls → response
+6. Auth: single-user via MCP_USER_ID env var (local trusted process, no JWT)
 
 ---
 

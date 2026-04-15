@@ -14,6 +14,7 @@ Upload study materials, ask questions about them, generate intelligent quizzes, 
 - **JWT Auth with Redis Sessions** — Register/login with hashed passwords. Sessions stored in Redis with logout and logout-all-devices support.
 - **Redis Caching** — LLM responses cached for 1 hour. Cache auto-invalidated when documents change.
 - **Rate Limiting** — Redis-backed rate limits (100 req/15min API, 20 req/15min auth) that persist across restarts.
+- **MCP Server** — Model Context Protocol server exposes all AI capabilities (Q&A, quizzes, email, Gmail) as tools for Claude Desktop, VS Code Copilot, and other MCP-compatible AI assistants. Runs over STDIO with direct service calls — no REST overhead.
 - **Dockerized** — Full docker-compose setup with health checks, restart policies, and persistent volumes.
 
 ## Architecture
@@ -33,6 +34,12 @@ React (TailwindCSS)  ──>  Express API (Node.js)
             docs,        sessions,      embeddings,
             chats,       rate limits)   per-user)
             quizzes)
+
+Claude Desktop / VS Code / MCP Client
+        ↓  (JSON-RPC 2.0 over STDIO)
+   MCP Server  (server/src/mcp/index.js)
+        ↓  (direct function calls)
+   Existing Services (rag, quiz, email, gmail, vectorStore)
 ```
 
 > **Note:** In Docker, the backend container builds the React frontend in a multi-stage build and serves both the static files and API on port 5000. A standalone nginx frontend container is also available on port 3002 for environments where separate serving is preferred.
@@ -43,7 +50,7 @@ React (TailwindCSS)  ──>  Express API (Node.js)
 |-------|-------------|
 | Frontend | React 18, React Router, TailwindCSS, Axios |
 | Backend | Node.js 20, Express, Mongoose, Multer, Zod |
-| AI | LangChain (LCEL), OpenAI (GPT + embeddings), FAISS |
+| AI | LangChain (LCEL), OpenAI (GPT + embeddings), FAISS, MCP SDK |
 | Data | MongoDB 7, Redis 7, FAISS vector store |
 | Infra | Docker Compose, nginx, Winston logging |
 
@@ -69,7 +76,8 @@ StudentAI/
 │       ├── models/             # User, Document, Chat, Quiz
 │       ├── routes/             # auth, chat, document, email, gmail, quiz
 │       ├── services/           # llm, rag, email, gmail, quiz (generator, evaluator), chunking, embedding, vectorStore
-│       └── utils/              # logger, cache, session, encryption
+│       ├── utils/              # logger, cache, session, encryption
+│       └── mcp/                # MCP server (tools, resources, utils, entry point)
 │
 ├── worker/                     # Background job processor
 │   └── pdfProcessor.js
@@ -134,6 +142,63 @@ StudentAI/
 
 All endpoints except auth and `/api/gmail/callback` require a `Bearer` token in the `Authorization` header.
 
+## MCP Server (AI Assistant Integration)
+
+The MCP (Model Context Protocol) server exposes StudentAI's capabilities as tools for AI assistants like Claude Desktop and VS Code Copilot. It reuses all existing services directly — no REST overhead or business logic duplication.
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_documents` | List all uploaded documents |
+| `get_document` | Get document details and extracted text |
+| `search_documents` | Semantic search across documents |
+| `upload_text_document` | Upload text content as a document |
+| `delete_document` | Delete a document and its vector embeddings |
+| `ask_question` | Ask a question using RAG pipeline |
+| `get_chat_history` | Get paginated chat history |
+| `generate_quiz` | Generate a quiz from study materials |
+| `submit_quiz` | Submit quiz answers and get graded results |
+| `get_quiz` | Get a specific quiz by ID |
+| `get_quiz_history` | Get paginated quiz history |
+| `generate_email` | Generate an email draft using AI |
+| `gmail_status` | Check Gmail connection status |
+| `send_gmail` | Send an email via Gmail |
+
+### MCP Resources
+
+| URI | Description |
+|-----|-------------|
+| `studentai://documents` | JSON list of all documents |
+| `studentai://documents/{documentId}` | Extracted text of a specific document |
+
+### Running the MCP Server
+
+```bash
+cd server
+MCP_USER_ID="<your-mongodb-user-id>" npm run mcp
+```
+
+### Claude Desktop Configuration
+
+Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+
+```json
+{
+  "mcpServers": {
+    "studentai": {
+      "command": "node",
+      "args": ["/absolute/path/to/StudentAI/server/src/mcp/index.js"],
+      "env": {
+        "MCP_USER_ID": "<your-mongodb-user-id>"
+      }
+    }
+  }
+}
+```
+
+The server loads remaining env vars (DB credentials, API keys, etc.) from `server/.env` automatically.
+
 ## Quick Start
 
 See [INSTRUCTIONS.md](INSTRUCTIONS.md) for detailed setup steps.
@@ -171,6 +236,7 @@ cd docker && docker compose up -d
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | (optional) |
 | `GOOGLE_REDIRECT_URI` | OAuth redirect URI | `http://localhost:5000/api/gmail/callback` |
 | `TOKEN_ENCRYPTION_KEY` | 64-char hex key for encrypting OAuth tokens | (optional) |
+| `MCP_USER_ID` | MongoDB user ID for MCP server auth | (MCP only) |
 
 ## License
 
